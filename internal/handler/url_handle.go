@@ -1,20 +1,27 @@
 package handler
 
 import (
-	"fmt"
+	"log"
 	"net/http"
-	"os"
 
-	"Go_shortenURL/pkg/shortener"
+	"Go_shortenURL/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
 
-func IndexPage(c *gin.Context) {
+type URLHandler struct {
+	URLService *service.URLService
+}
+
+func NewURLHandler(urlService *service.URLService) *URLHandler {
+	return &URLHandler{URLService: urlService}
+}
+
+func (h *URLHandler) IndexPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{})
 }
 
-func ShortenURL(c *gin.Context) {
+func (h *URLHandler) ShortenURL(c *gin.Context) {
 	url := c.PostForm("url")
 	if url == "" {
 		c.HTML(http.StatusBadRequest, "index.html", gin.H{
@@ -23,26 +30,31 @@ func ShortenURL(c *gin.Context) {
 		return
 	}
 
-	shortCode := shortener.Encode(url)
-	baseURL := os.Getenv("BASE_URL")
-	if baseURL == "" {
-		baseURL = "http://localhost:8080"
+	shortCode, err := h.URLService.ShortenURL(url)
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "index.html", gin.H{
+			"Error": "Failed to shorten URL.",
+		})
+		return
 	}
-
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"ShortURL":    fmt.Sprintf("%s/%s", baseURL, shortCode),
+		"ShortURL": shortCode,
 		"OriginalURL": url,
 	})
 }
 
-func RedirectURL(c *gin.Context) {
-	// shortCode := c.Param("shortCode")
-	url := "https://www.google.com"
-	if url == "" {
+func (h *URLHandler) RedirectURL(c *gin.Context) {
+	shortCode := c.Param("shortCode")
+	originalURL, err := h.URLService.GetURL(shortCode)
+	if err != nil {
 		c.HTML(http.StatusNotFound, "index.html", gin.H{
 			"Error": "URL not found.",
 		})
+		log.Fatal(err)
 		return
 	}
-	c.Redirect(http.StatusMovedPermanently, url)
+	log.Println(originalURL)
+	// c.Redirect(http.StatusMovedPermanently, originalURL)
+	//testing
+	c.Redirect(http.StatusFound, "https://www.google.com")
 }

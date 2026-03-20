@@ -3,30 +3,34 @@ package main
 import (
 	"net/http"
 	"os"
-
+	"Go_shortenURL/configs"
+	"Go_shortenURL/internal/repository"
+	"Go_shortenURL/internal/service"
 	"Go_shortenURL/internal/handler"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	for _, f := range []string{".env", "configs/config.env"} {
-		if err := godotenv.Load(f); err == nil {
-			break
-		}
-	}
+
+	config := configs.NewConfig()
+
+	urlRepository := repository.NewURLRepository(config.Database, config.Redis)
+
+	urlService := service.NewURLService(urlRepository)
+
+	h := handler.NewURLHandler(urlService)
 
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/", handler.IndexPage)
-	router.POST("/shorten", handler.ShortenURL)
+	router.GET("/", h.IndexPage)
+	router.POST("/shorten", h.ShortenURL)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
-	router.GET("/:shortCode", handler.RedirectURL)
+	router.GET("/:shortCode", h.RedirectURL)
 
 	port := os.Getenv("APP_PORT")
 	if port == "" {
