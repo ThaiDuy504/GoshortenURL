@@ -7,27 +7,27 @@ import (
 )
 
 type ServerConfig struct {
-	Port string `env:"PORT"`
+	Port string `env:"APP_PORT" env-default:"8080"`
 }
 
 type RedisConfig struct {
-	Addr string `env:"REDIS_ADDR"`
+	Addr     string `env:"REDIS_ADDR"`
 	Password string `env:"REDIS_PASSWORD"`
-	DB int `env:"REDIS_DB"`
+	DB       int    `env:"REDIS_DB"`
 }
 
 type DatabaseConfig struct {
-	Host string `env:"DB_HOST"`
-	Port string `env:"DB_PORT"`
-	User string `env:"DB_USER"`
+	Host     string `env:"DB_HOST"`
+	Port     string `env:"DB_PORT"`
+	User     string `env:"DB_USER"`
 	Password string `env:"DB_PASSWORD"`
-	Name string `env:"DB_NAME"`
+	Name     string `env:"DB_NAME"`
 }
 
 type Config struct {
-	Server ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
-	Redis RedisConfig
+	Redis    RedisConfig
 }
 
 func NewConfig() *Config {
@@ -38,7 +38,3 @@ func NewConfig() *Config {
 	}
 	return &cfg
 }
-
-
-	
-

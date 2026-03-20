@@ -1,12 +1,11 @@
 package main
 
 import (
-	"net/http"
-	"os"
 	"Go_shortenURL/configs"
+	"Go_shortenURL/internal/handler"
 	"Go_shortenURL/internal/repository"
 	"Go_shortenURL/internal/service"
-	"Go_shortenURL/internal/handler"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,10 +31,5 @@ func main() {
 	})
 	router.GET("/:shortCode", h.RedirectURL)
 
-	port := os.Getenv("APP_PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	router.Run(":" + port)
+	router.Run(":" + config.Server.Port)
 }

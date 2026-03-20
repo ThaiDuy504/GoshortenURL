@@ -1,4 +1,22 @@
 services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: postgres_server
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: secret
+            POSTGRES_DB: shortener
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres -d shortener"]
+            interval: 5s
+            timeout: 3s
+            retries: 10
+
     redis:
         image: redis:latest
         container_name: redis_server
@@ -6,8 +24,8 @@ services:
         ports:
             - "6379:6379"
         volumes:
-            # Mounts a local directory for data persistence
-            - ./redis_data:/data
+            - redis_data:/data
         command: redis-server --appendonly yes --requirepass 123
 volumes:
+    postgres_data:
     redis_data:
