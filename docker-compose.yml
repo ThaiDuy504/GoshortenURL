@@ -1,21 +1,42 @@
 services:
+    app:
+        build:
+            context: .
+            dockerfile: dockerfile
+        container_name: snip_app
+        restart: always
+        ports:
+            - "8080:8080"
+        environment:
+            - PORT=8080
+            - BASE_URL=http://localhost:8080
+            - ENCODE_LEN=6
+            - DB_HOST=postgres
+            - DB_PORT=5432
+            - DB_USER=postgres
+            - DB_PASSWORD=secret
+            - DB_NAME=shortener
+            - REDIS_ADDR=redis:6379
+            - REDIS_PASSWORD=123
+            - REDIS_DB=0
+        depends_on:
+            redis:
+                condition: service_healthy
+            postgres:
+                condition: service_started
+
     postgres:
-        image: postgres:15-alpine
+        image: postgres:16-alpine
         container_name: postgres_server
         restart: always
+        ports:
+            - "5432:5432"
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: secret
             POSTGRES_DB: shortener
-        ports:
-            - "5432:5432"
         volumes:
             - postgres_data:/var/lib/postgresql/data
-        healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U postgres -d shortener"]
-            interval: 5s
-            timeout: 3s
-            retries: 10
 
     redis:
         image: redis:latest
@@ -24,8 +45,15 @@ services:
         ports:
             - "6379:6379"
         volumes:
-            - redis_data:/data
+            - ./redis_data:/data
         command: redis-server --appendonly yes --requirepass 123
+        healthcheck:
+            test: ["CMD", "redis-cli", "-a", "123", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+            start_period: 5s
+
 volumes:
     postgres_data:
     redis_data:

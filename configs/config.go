@@ -32,7 +32,10 @@ type Config struct {
 
 func NewConfig() *Config {
 	var cfg Config
-	err := cleanenv.ReadConfig("configs/config.env", &cfg)
+	//using config.env
+	// err := cleanenv.ReadConfig("configs/config.env", &cfg)
+	//using env in docker compose
+	err := cleanenv.ReadEnv(&cfg)
 	if err != nil {
 		log.Fatal("Error reading config file", err)
 	}

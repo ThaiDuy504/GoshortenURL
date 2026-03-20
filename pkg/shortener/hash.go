@@ -1,13 +1,17 @@
 package shortener
 
-import (
-	b64 "encoding/base64"
-)
+import "math/rand"
 
 const (
+	ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	BASE = len(ALPHABET)
 	ENCODE_LEN = 6	
 )
 
 func Encode(url string) string {
-	return b64.StdEncoding.EncodeToString([]byte(url))[:ENCODE_LEN]
+	encoded := ""
+	for i := 0; i < ENCODE_LEN; i++ {
+		encoded = encoded + string(ALPHABET[rand.Intn(BASE)])
+	}
+	return encoded
 }

@@ -1,0 +1,41 @@
+# VCS
+.git
+.gitignore
+
+# Local / runtime data (never bake into image)
+redis_data/
+postgres_data/
+
+# Go build artifacts & caches
+bin/
+dist/
+*.exe
+*.test
+*.out
+vendor/
+
+# IDE & OS junk
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Repo meta / agents (not used by `go build`)
+.agent/
+.agents/
+skills-lock.json
+
+# Compose & local orchestration (not copied by Dockerfile)
+docker-compose.yml
+docker-compose.*.yml
+
+# Docs (optional; shrinks build context)
+*.md
+
+# Root env files (use compose `environment:` or mounted secrets instead)
+.env
+.env.*
+
+# If you prefer never to copy real secrets into the build context, uncomment:
+# configs/config.env

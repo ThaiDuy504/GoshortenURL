@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"Go_shortenURL/internal/service"
@@ -50,11 +49,7 @@ func (h *URLHandler) RedirectURL(c *gin.Context) {
 		c.HTML(http.StatusNotFound, "index.html", gin.H{
 			"Error": "URL not found.",
 		})
-		log.Fatal(err)
 		return
 	}
-	log.Println(originalURL)
-	// c.Redirect(http.StatusMovedPermanently, originalURL)
-	//testing
-	c.Redirect(http.StatusFound, "https://www.google.com")
+	c.Redirect(http.StatusFound, originalURL)
 }
