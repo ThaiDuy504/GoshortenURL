@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const baseURL = "http://localhost:8080/"
+
 type URLHandler struct {
 	URLService *service.URLService
 }
@@ -38,7 +40,7 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 		return
 	}
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"ShortURL": shortCode,
+		"ShortURL": baseURL + shortCode,
 		"OriginalURL": url,
 	})
 }

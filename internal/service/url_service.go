@@ -15,7 +15,7 @@ func NewURLService(urlRepository *repository.URLRepository) *URLService {
 }
 
 func (s *URLService) ShortenURL(ctx context.Context, url string) (string, error) {
-	shortCode := shortener.Encode(url)
+	shortCode := shortener.Encode()
 	err := s.URLRepository.SetURL(ctx, shortCode, url)
 	if err != nil {
 		return "", err

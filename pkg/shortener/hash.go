@@ -8,7 +8,7 @@ const (
 	ENCODE_LEN = 6	
 )
 
-func Encode(url string) string {
+func Encode() string {
 	encoded := ""
 	for i := 0; i < ENCODE_LEN; i++ {
 		encoded = encoded + string(ALPHABET[rand.Intn(BASE)])
