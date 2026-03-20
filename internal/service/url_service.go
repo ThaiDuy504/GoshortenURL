@@ -15,7 +15,7 @@ type URLService struct {
 func NewURLService(urlRepository *repository.URLRepository) *URLService {
 	return &URLService{URLRepository: urlRepository}
 }
-func (s *URLService) ValidateURL(url string) error {
+func (s *URLService) validateURL(url string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -29,7 +29,11 @@ func (s *URLService) ValidateURL(url string) error {
 
 func (s *URLService) ShortenURL(ctx context.Context, url string) (string, error) {
 	shortCode := shortener.Encode()
-	err := s.URLRepository.SetURL(ctx, shortCode, url)
+	err := s.validateURL(url)
+	if err != nil {
+		return "", err
+	}
+	err = s.URLRepository.SetURL(ctx, shortCode, url)
 	if err != nil {
 		return "", err
 	}
