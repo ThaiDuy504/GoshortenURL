@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
 const cacheTTL = 24 * time.Hour
 
 type URLRepository struct {
-	db    *pgx.Conn
+	db    *pgxpool.Pool
 	redis *redis.Client
 }
 
@@ -30,13 +31,10 @@ func NewURLRepository(dbConfig configs.DatabaseConfig, redisConfig configs.Redis
 		dbConfig.Name,
 	)
 
-	db, err := pgx.Connect(ctx, connectionString)
+	db, err := pgxpool.New(ctx,connectionString)
+
 	if err != nil {
 		log.Fatalf("connect postgres failed: %v", err)
-	}
-
-	if err := db.Ping(ctx); err != nil {
-		log.Fatalf("ping postgres failed: %v", err)
 	}
 
 	if err := ensureSchema(ctx, db); err != nil {
@@ -56,7 +54,7 @@ func NewURLRepository(dbConfig configs.DatabaseConfig, redisConfig configs.Redis
 	return &URLRepository{db: db, redis: redisClient}
 }
 
-func ensureSchema(ctx context.Context, db *pgx.Conn) error {
+func ensureSchema(ctx context.Context, db *pgxpool.Pool) error {
 	const createExtensionQuery = `
 		CREATE EXTENSION IF NOT EXISTS pgcrypto
 	`
@@ -113,12 +111,10 @@ func ensureSchema(ctx context.Context, db *pgx.Conn) error {
 	return err
 }
 
-func (r *URLRepository) GetURL(shortCode string) (string, error) {
-	ctx := context.Background()
-
+func (r *URLRepository) GetURL(ctx context.Context,shortCode string) (string, error) {
 	cachedURL, err := r.redis.Get(ctx, shortCode).Result()
 	if err == nil {
-		r.incrementClickCount(ctx, shortCode)
+		go r.incrementClickCount(ctx, shortCode)
 		return cachedURL, nil
 	}
 
@@ -139,7 +135,7 @@ func (r *URLRepository) GetURL(shortCode string) (string, error) {
 		log.Printf("set redis cache failed for shortCode=%s: %v", shortCode, err)
 	}
 
-	r.incrementClickCount(ctx, shortCode)
+	go r.incrementClickCount(ctx, shortCode)
 
 	return originalURL, nil
 }
@@ -151,8 +147,7 @@ func (r *URLRepository) incrementClickCount(ctx context.Context, shortCode strin
 	}
 }
 
-func (r *URLRepository) SetURL(shortCode, url string) error {
-	ctx := context.Background()
+func (r *URLRepository) SetURL(ctx context.Context, shortCode, url string) error {
 
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO urls (short_code, original_url)

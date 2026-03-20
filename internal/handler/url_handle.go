@@ -29,7 +29,8 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 		return
 	}
 
-	shortCode, err := h.URLService.ShortenURL(url)
+	shortCode, err := h.URLService.ShortenURL(c.Request.Context(), url)
+
 	if err != nil {
 		c.HTML(http.StatusInternalServerError, "index.html", gin.H{
 			"Error": "Failed to shorten URL.",
@@ -44,7 +45,7 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 
 func (h *URLHandler) RedirectURL(c *gin.Context) {
 	shortCode := c.Param("shortCode")
-	originalURL, err := h.URLService.GetURL(shortCode)
+	originalURL, err := h.URLService.GetURL(c.Request.Context(), shortCode)
 	if err != nil {
 		c.HTML(http.StatusNotFound, "index.html", gin.H{
 			"Error": "URL not found.",
