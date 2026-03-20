@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{if .ShortURL}}Link ready — Snip{{else}}Snip — URL Shortener{{end}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       oklch(96% 0.012 65);
+      --bg-input: oklch(99% 0.008 65);
+      --text:     oklch(18% 0.018 65);
+      --muted:    oklch(48% 0.018 65);
+      --accent:   oklch(52% 0.20 30);
+      --accent-h: oklch(46% 0.22 30);
+      --border:   oklch(84% 0.018 65);
+      --error:    oklch(52% 0.20 15);
+      --success:  oklch(52% 0.18 155);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1.5rem, 6vw, 5rem);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .logo span { color: var(--accent); }
+
+    nav a {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    nav a:hover { color: var(--text); }
+
+    /* ── Main ── */
+    main {
+      padding: clamp(3rem, 8vw, 7rem) clamp(1.5rem, 6vw, 5rem);
+      max-width: 72rem;
+    }
+
+    .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .eyebrow--default { color: var(--accent); }
+
+    .eyebrow--success {
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .eyebrow--success::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      margin-bottom: 0.3em;
+    }
+
+    h1 em {
+      font-style: normal;
+      font-weight: 300;
+      color: var(--muted);
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      color: var(--muted);
+      font-weight: 300;
+      margin-bottom: clamp(2.5rem, 5vw, 4rem);
+      max-width: 36ch;
+    }
+
+    .subtitle--url {
+      font-size: 0.95rem;
+      word-break: break-all;
+      max-width: 56ch;
+    }
+
+    /* ── Form ── */
+    .form-wrap { max-width: 680px; }
+
+    .input-row {
+      display: flex;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--bg-input);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input-row:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px oklch(52% 0.20 30 / 0.12);
+    }
+
+    .input-row input[type="url"] {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 0.9rem 1.1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      color: var(--text);
+      outline: none;
+      min-width: 0;
+    }
+
+    .input-row input[type="url"]::placeholder {
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    .input-row button {
+      flex-shrink: 0;
+      padding: 0.9rem 1.6rem;
+      background: var(--accent);
+      color: oklch(99% 0.005 65);
+      border: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .input-row button:hover  { background: var(--accent-h); }
+    .input-row button:active { transform: scale(0.98); }
+
+    .error-msg {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--error);
+      font-weight: 500;
+      animation: slideIn 0.2s ease-out;
+    }
+
+    .hint {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 300;
+    }
+
+    /* ── Result ── */
+    .result-block {
+      max-width: 680px;
+      animation: revealUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .result-row {
+      display: flex;
+      align-items: stretch;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--bg-input);
+      margin-bottom: 1.5rem;
+    }
+
+    .result-url {
+      flex: 1;
+      padding: 0.9rem 1.1rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--accent);
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      padding: 0.9rem 1.3rem;
+      background: transparent;
+      border: none;
+      border-left: 1.5px solid var(--border);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover { background: oklch(92% 0.015 65); color: var(--text); }
+    .copy-btn.copied { color: var(--success); }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.3rem;
+      background: var(--accent);
+      color: oklch(99% 0.005 65);
+      border: none;
+      border-radius: 5px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .btn-primary:hover { background: var(--accent-h); }
+
+    .btn-ghost {
+      font-size: 0.875rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .btn-ghost:hover { color: var(--text); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1.5rem clamp(1.5rem, 6vw, 5rem);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+    }
+
+    footer p { font-size: 0.8rem; color: var(--muted); font-weight: 300; }
+
+    .stack-badge { font-size: 0.75rem; color: var(--muted); font-weight: 300; letter-spacing: 0.04em; }
+    .stack-badge strong { font-weight: 500; color: var(--text); }
+
+    /* ── Animations ── */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes revealUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <header>
+      <a href="/" class="logo">snip<span>.</span></a>
+      <nav><a href="/health">status</a></nav>
+    </header>
+
+    <main>
+      {{if .ShortURL}}
+        <p class="eyebrow eyebrow--success">Link ready</p>
+        <h1>Here's your<br /><em>short link.</em></h1>
+        <p class="subtitle subtitle--url" title="{{.OriginalURL}}">↳ {{.OriginalURL}}</p>
+
+        <div class="result-block">
+          <p class="result-label">Your short URL</p>
+          <div class="result-row">
+            <span class="result-url" id="shortUrl">{{.ShortURL}}</span>
+            <button class="copy-btn" id="copyBtn" onclick="copyShortURL()" type="button">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="4.5" y="0.75" width="8.75" height="8.75" rx="1.5" stroke="currentColor" stroke-width="1.25"/>
+                <path d="M2 4.5H1.5A.75.75 0 0 0 .75 5.25v7.5c0 .414.336.75.75.75h7.5a.75.75 0 0 0 .75-.75V13" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+              </svg>
+              <span id="copyLabel">Copy</span>
+            </button>
+          </div>
+          <div class="actions">
+            <a href="/" class="btn-primary">↩ Shorten another</a>
+            <a href="{{.ShortURL}}" target="_blank" rel="noopener" class="btn-ghost">Open link ↗</a>
+          </div>
+        </div>
+      {{else}}
+        <p class="eyebrow eyebrow--default">URL Shortener</p>
+        <h1>Trim the<br /><em>long links.</em></h1>
+        <p class="subtitle">Paste any URL and get a clean, shareable short link in one click.</p>
+
+        <div class="form-wrap">
+          <form action="/shorten" method="POST">
+            <div class="input-row">
+              <input
+                type="url"
+                name="url"
+                placeholder="https://your-very-long-url.com/goes/here"
+                required
+                autofocus
+                value="{{.PrefillURL}}"
+              />
+              <button type="submit">Shorten →</button>
+            </div>
+            {{if .Error}}
+            <p class="error-msg">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="7" cy="7" r="6.25" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 4v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="7" cy="10" r="0.75" fill="currentColor"/>
+              </svg>
+              {{.Error}}
+            </p>
+            {{end}}
+            <p class="hint">Supports http and https links.</p>
+          </form>
+        </div>
+      {{end}}
+    </main>
+  </div>
+
+  <footer>
+    <p>snip. — fast URL shortening</p>
+    <span class="stack-badge">Built with <strong>Go</strong> + <strong>Gin</strong></span>
+  </footer>
+
+  {{if .ShortURL}}
+  <script>
+    function copyShortURL() {
+      const url = document.getElementById('shortUrl').textContent.trim();
+      const btn = document.getElementById('copyBtn');
+      const label = document.getElementById('copyLabel');
+      navigator.clipboard.writeText(url).then(() => {
+        btn.classList.add('copied');
+        label.textContent = 'Copied!';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          label.textContent = 'Copy';
+        }, 2000);
+      });
+    }
+  </script>
+  {{end}}
+</body>
+</html>
