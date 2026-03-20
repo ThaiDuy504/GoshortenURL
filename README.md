@@ -4,22 +4,25 @@ Dịch vụ rút gọn URL viết bằng Go. Module: `Go_shortenURL` (Go 1.25.x)
 
 ## Trạng thái repo
 
-Hiện tại chỉ có `go.mod`. Cấu trúc thư mục bên dưới là **layout đề xuất** khi bạn triển khai đầy đủ; có thể tạo dần các thư mục tương ứng khi viết code.
+Các thư mục template đã có file `.gitkeep` (Git không track folder rỗng). Thêm `main.go`, package Go, v.v. và có thể xóa `.gitkeep` khi thư mục đã có file thật.
+
+Cấu trúc bên dưới khớp repo; `pkg/shortener/` thêm cho đúng workflow (hash slug) trong README.
 
 ## Cấu trúc thư mục (đề xuất)
 
 ```text
 Go_shortenURL/
 ├── cmd/
-│   └── server/                 # Binary chạy HTTP server
-│       └── main.go             # Điểm vào: đọc config, wire deps, ListenAndServe
-├── internal/                   # Code private, không import từ module khác
-│   ├── handler/                # HTTP: POST shorten, GET /:id redirect, JSON
-│   ├── service/                # Logic: tạo slug, validate URL, gọi storage
-│   ├── storage/                # Lưu map short→long (memory/Redis/SQLite…)
-│   └── config/                 # Env, cờ, port, base URL cho link ngắn
-├── api/                        # (Tuỳ chọn) OpenAPI spec hoặc contract
-├── scripts/                    # (Tuỳ chọn) migrate, seed, dev helpers
+│   └── server/                 # Binary chạy HTTP server (.gitkeep → thêm main.go)
+├── internal/
+│   ├── handler/
+│   ├── service/
+│   ├── storage/
+│   └── config/
+├── pkg/
+│   └── shortener/              # Hash / tạo slug ngắn (workflow)
+├── api/                        # OpenAPI / contract (tuỳ chọn)
+├── scripts/                    # migrate, seed (tuỳ chọn)
 ├── go.mod
 ├── go.sum
 └── README.md
