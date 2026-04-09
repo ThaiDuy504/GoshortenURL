@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 )
 
 type URLService struct {
@@ -15,7 +16,6 @@ type URLService struct {
 func NewURLService(urlRepository *repository.URLRepository) *URLService {
 	return &URLService{URLRepository: urlRepository}
 }
-
 
 func (s *URLService) validateURL(url string) error {
 	resp, err := http.Get(url)
@@ -30,26 +30,37 @@ func (s *URLService) validateURL(url string) error {
 }
 
 func (s *URLService) ShortenURL(ctx context.Context, url string) (string, error) {
-	shortCode := shortener.Encode()
 	err := s.validateURL(url)
 	if err != nil {
 		return "", err
 	}
 
-	storedURL,err := s.URLRepository.GetURL(ctx, url)
-	if err != nil {
-		return "", err
+	// Kiểm tra xem URL này đã được rút gọn lần nào chưa
+	existingShortCode, err := s.URLRepository.GetShortCodeByOriginalURL(ctx, url)
+	if err == nil {
+		// URL đã tồn tại, trả về shortCode cũ
+		return existingShortCode, nil
 	}
 
-	if storedURL != "" {
-		return storedURL, nil
+	// URL chưa tồn tại, tạo mới với retry logic
+	// Retry tối đa 5 lần nếu shortCode bị trùng
+	for attempt := 0; attempt < 5; attempt++ {
+		shortCode := shortener.Encode()
+		err = s.URLRepository.SetURL(ctx, shortCode, url)
+
+		// Nếu SetURL thành công, return shortCode
+		if err == nil {
+			return shortCode, nil
+		}
+
+		// Nếu có lỗi khác (không phải trùng lặp), return lỗi ngay
+		if !strings.Contains(err.Error(), "unique") && !strings.Contains(err.Error(), "Duplicate") {
+			return "", err
+		}
+		// Nếu lỗi trùng lặp, loop lại để retry
 	}
 
-	err = s.URLRepository.SetURL(ctx, shortCode, url)
-	if err != nil {
-		return "", err
-	}
-	return shortCode, nil
+	return "", errors.New("failed to generate unique short code after 5 attempts")
 }
 
 func (s *URLService) GetURL(ctx context.Context, shortCode string) (string, error) {
@@ -59,4 +70,3 @@ func (s *URLService) GetURL(ctx context.Context, shortCode string) (string, erro
 	}
 	return url, nil
 }
-

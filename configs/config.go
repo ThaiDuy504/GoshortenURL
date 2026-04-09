@@ -32,15 +32,16 @@ type Config struct {
 
 func NewConfig() *Config {
 	var cfg Config
-	//using config.env
-	err := cleanenv.ReadConfig("configs/config.env", &cfg)
-	if err != nil {
-		log.Fatal("Error loading config file", err)
+
+	// Thử đọc từ tệp config.env (có thể thất bại nếu chạy trong Docker không có file này)
+	if err := cleanenv.ReadConfig("configs/config.env", &cfg); err != nil {
+		log.Printf("Warning: Could not load config file (configs/config.env): %v. Relying on environment variables.", err)
 	}
-	//using env in docker compose
-	err = cleanenv.ReadEnv(&cfg)
-	if err != nil {
-		log.Fatal("Error reading config file", err)
+
+	// Đọc từ biến môi trường (Ghi đè hoặc bổ sung)
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		log.Fatal("Error reading environment variables: ", err)
 	}
+
 	return &cfg
 }

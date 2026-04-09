@@ -31,7 +31,7 @@ func NewURLRepository(dbConfig configs.DatabaseConfig, redisConfig configs.Redis
 		dbConfig.Name,
 	)
 
-	db, err := pgxpool.New(ctx,connectionString)
+	db, err := pgxpool.New(ctx, connectionString)
 
 	if err != nil {
 		log.Fatalf("connect postgres failed: %v", err)
@@ -111,7 +111,7 @@ func ensureSchema(ctx context.Context, db *pgxpool.Pool) error {
 	return err
 }
 
-func (r *URLRepository) GetURL(ctx context.Context,shortCode string) (string, error) {
+func (r *URLRepository) GetURL(ctx context.Context, shortCode string) (string, error) {
 	cachedURL, err := r.redis.Get(ctx, shortCode).Result()
 	if err == nil {
 		go r.incrementClickCount(ctx, shortCode)
@@ -160,4 +160,16 @@ func (r *URLRepository) SetURL(ctx context.Context, shortCode, url string) error
 	}
 
 	return r.redis.Set(ctx, shortCode, url, cacheTTL).Err()
+}
+
+func (r *URLRepository) GetShortCodeByOriginalURL(ctx context.Context, originalURL string) (string, error) {
+	var shortCode string
+	err := r.db.QueryRow(ctx, "SELECT short_code FROM urls WHERE original_url = $1 LIMIT 1", originalURL).Scan(&shortCode)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", errors.New("URL not found")
+		}
+		return "", err
+	}
+	return shortCode, nil
 }
